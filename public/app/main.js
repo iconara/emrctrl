@@ -45,16 +45,23 @@
   var module = angular.module("emrctrl", ["emrctrl.formatting"])
 })()
 
-var AppController = function ($scope, $http, $log) {
+var AppController = function ($scope, $http, $q, $log) {
   $scope.flows = []
   $scope.loading = false
 
   $scope.reload = function () {
     $scope.loading = true
-    var request = $http.get('http://localhost:9292/v1/flows')
+    var request = $http.get("/v1/flows")
     request.success(function (data) {
-      $scope.flows = sortFlows(prepareFlows(data))
       $scope.loading = false
+      $scope.flows = data
+      $scope.flows
+        .map(prepareFlow)
+        .sort(descendingCreationOrder)
+
+      $scope.flows
+        .filter(function (flow) { return flow.state == "RUNNING" })
+        .forEach(loadAdditionalData)
     })
     request.error(function(data, status, headers, config) {
       $log.error("BLURGH")
@@ -64,19 +71,23 @@ var AppController = function ($scope, $http, $log) {
 
   $scope.reload()
 
-  var prepareFlows = function (flows) {
-    return flows.map(function (flow) {
-      flow.created_at = new Date(flow.created_at * 1000)
-      flow.ready_at = new Date(flow.ready_at * 1000)
-      flow.started_at = new Date(flow.started_at * 1000)
-      flow.ended_at = new Date(flow.ended_at * 1000)
-      return flow
+  var loadAdditionalData = function (flow) {
+    var request = $http.get("/v1/flows/" + flow.job_flow_id)
+    request.success(function (data) {
+      $scope.flows[$scope.flows.indexOf(flow)] = prepareFlow(data)
     })
   }
 
-  var sortFlows = function (flows) {
-    return flows.sort(function (a, b) {
-      return b.created_at - a.created_at
-    })
+  var prepareFlow = function (flow) {
+    flow.elapsed_time = flow.started_at == 0 ? 0 : (flow.ended_at - flow.started_at) * 1000
+    flow.created_at = new Date(flow.created_at * 1000)
+    flow.ready_at = new Date(flow.ready_at * 1000)
+    flow.started_at = new Date(flow.started_at * 1000)
+    flow.ended_at = new Date(flow.ended_at * 1000)
+    return flow
+  }
+
+  var descendingCreationOrder = function (a, b) {
+    return b.created_at.getTime() - a.created_at.getTime()
   }
 }

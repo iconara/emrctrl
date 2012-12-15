@@ -78,6 +78,13 @@
                   }"></i>&nbsp;{{flow.state}}
                 </span>
               </td>
+              <td>
+                <span ng-show="flow.state == 'COMPLETED' && flow.master_public_dns_name">
+                  <a title="Go to tasktracker" href="http://{{flow.master_public_dns_name}}:9100/" target="_blank">
+                    <i class="icon-external-link"></i>
+                  </a>
+                </span>
+              </td>
             </tr>
           </tbody>
         </table>
