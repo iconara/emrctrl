@@ -5,9 +5,9 @@
     <meta charset="utf-8">
     <title>EMRCRTL</title>
     <link rel="icon" type="image/x-icon" href="data:image/x-icon;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQEAYAAABPYyMiAAAABmJLR0T///////8JWPfcAAAACXBIWXMAAABIAAAASABGyWs+AAAAF0lEQVRIx2NgGAWjYBSMglEwCkbBSAcACBAAAeaR9cIAAAAASUVORK5CYII=">
-    <link rel="stylesheet" href="styles/app.css">
     <link rel="stylesheet" href="styles/bootstrap.min.css">
     <link rel="stylesheet" href="styles/font-awesome.css">
+    <link rel="stylesheet" href="styles/app.css">
     <script src="lib/jquery.min.js"></script>
     <!-- <script src="lib/bootstrap.min.js"></script> -->
     <script src="lib/underscore.min.js"></script>
@@ -52,8 +52,8 @@
           </thead>
           <tbody>
             <tr ng-repeat="flow in flows">
-              <td>{{flow.job_flow_id}}</td>
-              <td>{{flow.name}}</td>
+              <td class="job-flow-id">{{flow.job_flow_id}}</td>
+              <td class="job-flow-name">{{flow.name}}</td>
               <td title="{{flow.created_at | date:'yyyy-MM-dd HH:mm:ss'}}">{{flow.created_at | timeAgo}}</td>
               <td title="{{flow.ended_at | date:'yyyy-MM-dd HH:mm:ss'}}">{{flow.ended_at | timeAgo}}</td>
               <td>
@@ -66,6 +66,7 @@
                   'badge-inverse': false
                 }">
                   <i ng-class="{
+                    'flow-state-icon': true,
                     'icon-time': flow.state == 'RUNNING',
                     'icon-ok-sign': flow.state == 'COMPLETED',
                     'icon-exclamation-sign': flow.state == 'TERMINATED',
