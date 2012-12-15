@@ -12,6 +12,7 @@
     <!-- <script src="lib/bootstrap.min.js"></script> -->
     <script src="lib/underscore.min.js"></script>
     <script src="lib/underscore.string.min.js"></script>
+    <script src="lib/moment.min.js"></script>
     <script src="lib/angular.min.js"></script>
     <script src="app/main.js"></script>
   </head>
@@ -47,15 +48,18 @@
               <th>Name</th>
               <th>Created at</th>
               <th>Ended at</th>
+              <th>Elapsed time</th>
               <th>State</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
             <tr ng-repeat="flow in flows">
               <td class="job-flow-id">{{flow.job_flow_id}}</td>
               <td class="job-flow-name">{{flow.name}}</td>
-              <td title="{{flow.created_at | date:'yyyy-MM-dd HH:mm:ss'}}">{{flow.created_at | timeAgo}}</td>
-              <td title="{{flow.ended_at | date:'yyyy-MM-dd HH:mm:ss'}}">{{flow.ended_at | timeAgo}}</td>
+              <td title="{{flow.created_at | isoDateTime}}">{{flow.created_at | timeAgo}}</td>
+              <td title="{{flow.ended_at | isoDateTime}}">{{flow.ended_at | timeAgo}}</td>
+              <td>{{flow.elapsed_time | elapsedTime}}</td>
               <td>
                 <span ng-class="{
                   'badge': true,
