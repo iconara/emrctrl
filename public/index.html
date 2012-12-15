@@ -19,75 +19,88 @@
   <body ng-controller="AppController">
     <div class="container">
       <div class="row">
-        <div class="navbar">
-          <div class="navbar-inner">
-            <a class="brand" href="#">
-              <i class="icon-cogs"></i>
-              EMRCTRL
-            </a>
-            <ul class="nav pull-right">
-              <li>
-                <a ng-click="reload()" ng-hide="loading">
-                  <i class="icon-refresh"></i>
-                  Reload
-                </a>
-                <a ng-show="loading">
-                  <i class="icon-cog"></i>
-                  Loading...
-                </a>
-              </li>
-            </ul>
+        <div class="span12">
+          <div class="navbar">
+            <div class="navbar-inner">
+              <a class="brand" href="#">
+                <i class="icon-cogs"></i>
+                EMRCTRL
+              </a>
+              <ul class="nav pull-right">
+                <li>
+                  <a ng-click="reload()" ng-hide="loading">
+                    <i class="icon-refresh"></i>
+                    Reload
+                  </a>
+                  <a ng-show="loading">
+                    <i class="icon-cog"></i>
+                    Loading...
+                  </a>
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
       </div>
-      <div class="row">
-        <table class="table table-striped table-hover table-condensed" ng-show="flows.length > 0">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Name</th>
-              <th>Created at</th>
-              <th>Ended at</th>
-              <th>Elapsed time</th>
-              <th>State</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr ng-repeat="flow in flows">
-              <td class="job-flow-id">{{flow.job_flow_id}}</td>
-              <td class="job-flow-name">{{flow.name}}</td>
-              <td title="{{flow.created_at | isoDateTime}}">{{flow.created_at | timeAgo}}</td>
-              <td title="{{flow.ended_at | isoDateTime}}">{{flow.ended_at | timeAgo}}</td>
-              <td>{{flow.elapsed_time | elapsedTime}}</td>
-              <td>
-                <span ng-class="{
-                  'badge': true,
-                  'badge-success': flow.state == 'COMPLETED',
-                  'badge-warning': flow.state == 'TERMINATED',
-                  'badge-important': flow.state == 'FAILED',
-                  'badge-info': flow.state == 'RUNNING',
-                  'badge-inverse': false
-                }">
-                  <i ng-class="{
-                    'flow-state-icon': true,
-                    'icon-time': flow.state == 'RUNNING',
-                    'icon-ok-sign': flow.state == 'COMPLETED',
-                    'icon-exclamation-sign': flow.state == 'TERMINATED',
-                    'icon-warning-sign': flow.state == 'FAILED'
-                  }"></i>&nbsp;{{flow.state}}
-                </span>
-              </td>
-              <td>
-                <span ng-show="flow.state == 'COMPLETED' && flow.master_public_dns_name">
-                  <a title="Go to tasktracker" href="http://{{flow.master_public_dns_name}}:9100/" target="_blank">
-                    <i class="icon-external-link"></i>
-                  </a>
-                </span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      <div class="row" ng-show="selectedFlow">
+        <div class="span12">
+          <div class="well">
+            {{selectedFlow | json}}
+          </div>
+        </div>
+      </div>
+      <div class="row" ng-show="flows.length > 0">
+        <div class="span12">
+          <div>
+            <table class="table table-striped table-hover table-condensed">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Name</th>
+                  <th>Created at</th>
+                  <th>Ended at</th>
+                  <th>Elapsed time</th>
+                  <th>State</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr ng-repeat="flow in flows" ng-click="selectFlow(flow)">
+                  <td class="job-flow-id">{{flow.job_flow_id}}</td>
+                  <td class="job-flow-name">{{flow.name}}</td>
+                  <td title="{{flow.created_at | isoDateTime}}">{{flow.created_at | timeAgo}}</td>
+                  <td title="{{flow.ended_at | isoDateTime}}">{{flow.ended_at | timeAgo}}</td>
+                  <td>{{flow.elapsed_time | elapsedTime}}</td>
+                  <td>
+                    <span ng-class="{
+                      'badge': true,
+                      'badge-success': flow.state == 'COMPLETED',
+                      'badge-warning': flow.state == 'TERMINATED',
+                      'badge-important': flow.state == 'FAILED',
+                      'badge-info': flow.state == 'RUNNING',
+                      'badge-inverse': false
+                    }">
+                      <i ng-class="{
+                        'flow-state-icon': true,
+                        'icon-time': flow.state == 'RUNNING',
+                        'icon-ok-sign': flow.state == 'COMPLETED',
+                        'icon-exclamation-sign': flow.state == 'TERMINATED',
+                        'icon-warning-sign': flow.state == 'FAILED'
+                      }"></i>&nbsp;{{flow.state}}
+                    </span>
+                  </td>
+                  <td>
+                    <span ng-show="flow.state == 'RUNNING' && flow.master_public_dns_name">
+                      <a title="Go to tasktracker" href="http://{{flow.master_public_dns_name}}:9100/" target="_blank">
+                        <i class="icon-external-link"></i>
+                      </a>
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
   </body>
