@@ -1,0 +1,82 @@
+<!doctype html>
+
+<html lang="en" ng-app="emrctrl">
+  <head>
+    <meta charset="utf-8">
+    <title>EMRCRTL</title>
+    <link rel="icon" type="image/x-icon" href="data:image/x-icon;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQEAYAAABPYyMiAAAABmJLR0T///////8JWPfcAAAACXBIWXMAAABIAAAASABGyWs+AAAAF0lEQVRIx2NgGAWjYBSMglEwCkbBSAcACBAAAeaR9cIAAAAASUVORK5CYII=">
+    <link rel="stylesheet" href="styles/app.css">
+    <link rel="stylesheet" href="styles/bootstrap.min.css">
+    <link rel="stylesheet" href="styles/font-awesome.css">
+    <script src="lib/jquery.min.js"></script>
+    <!-- <script src="lib/bootstrap.min.js"></script> -->
+    <script src="lib/underscore.min.js"></script>
+    <script src="lib/underscore.string.min.js"></script>
+    <script src="lib/angular.min.js"></script>
+    <script src="app/main.js"></script>
+  </head>
+  <body ng-controller="AppController">
+    <div class="container">
+      <div class="row">
+        <div class="navbar">
+          <div class="navbar-inner">
+            <a class="brand" href="#">
+              <i class="icon-cogs"></i>
+              EMRCTRL
+            </a>
+            <ul class="nav pull-right">
+              <li>
+                <a ng-click="reload()" ng-hide="loading">
+                  <i class="icon-refresh"></i>
+                  Reload
+                </a>
+                <a ng-show="loading">
+                  <i class="icon-cog"></i>
+                  Loading...
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <table class="table table-striped table-hover table-condensed">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Created at</th>
+              <th>Ended at</th>
+              <th>State</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr ng-repeat="flow in flows">
+              <td>{{flow.job_flow_id}}</td>
+              <td>{{flow.name}}</td>
+              <td title="{{flow.created_at | date:'yyyy-MM-dd HH:mm:ss'}}">{{flow.created_at | timeAgo}}</td>
+              <td title="{{flow.ended_at | date:'yyyy-MM-dd HH:mm:ss'}}">{{flow.ended_at | timeAgo}}</td>
+              <td>
+                <span ng-class="{
+                  'badge': true,
+                  'badge-success': flow.state == 'COMPLETED',
+                  'badge-warning': flow.state == 'TERMINATED',
+                  'badge-important': flow.state == 'FAILED',
+                  'badge-info': flow.state == 'RUNNING',
+                  'badge-inverse': false
+                }">
+                  <i ng-class="{
+                    'icon-time': flow.state == 'RUNNING',
+                    'icon-ok-sign': flow.state == 'COMPLETED',
+                    'icon-exclamation-sign': flow.state == 'TERMINATED',
+                    'icon-warning-sign': flow.state == 'FAILED'
+                  }"></i>&nbsp;{{flow.state}}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </body>
+</html>
