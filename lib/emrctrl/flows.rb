@@ -20,7 +20,7 @@ module Emrctrl
       properties = style == :summary ? SUMMARY_PROPERTIES : ALL_PROPERTIES
       properties.each_with_object({}) do |property, obj|
         obj[property] = flow.send(property)
-        if date_time?(property)
+        if obj[property] && date_time?(property)
           obj[property] = obj[property].to_i
         end
       end

@@ -14,13 +14,21 @@
 
   module.filter("timeAgo", function () {
     return function (input) {
-      return moment(input).calendar()
+      if (input) {
+        return moment(input).calendar()
+      } else {
+        return null
+      }
     }
   })
 
   module.filter("isoDateTime", function () {
     return function (input) {
-      return moment(input).format("YYYY-MM-DD HH:mm")
+      if (input) {
+        return moment(input).format("YYYY-MM-DD HH:mm")
+      } else {
+        return null
+      }
     }
   })
 
@@ -48,12 +56,22 @@
     var self = {}
     var flows = []
 
+    var calculateElapsedTime = function (flow) {
+      if (flow.started_at == null) {
+        return 0
+      } else {
+        var start = flow.started_at.getTime()
+        var end = (flow.ended_at == null ? new Date() : flow.ended_at).getTime()
+        return end - start
+      }
+    }
+
     var prepareFlow = function (flow) {
-      flow.elapsed_time = flow.started_at == 0 ? 0 : (flow.ended_at - flow.started_at) * 1000
       flow.created_at = new Date(flow.created_at * 1000)
-      flow.ready_at = new Date(flow.ready_at * 1000)
-      flow.started_at = new Date(flow.started_at * 1000)
-      flow.ended_at = new Date(flow.ended_at * 1000)
+      flow.ready_at = flow.ready_at == null ? null : new Date(flow.ready_at * 1000)
+      flow.started_at = flow.started_at == null ? null : new Date(flow.started_at * 1000)
+      flow.ended_at = flow.ended_at == null ? null : new Date(flow.ended_at * 1000)
+      flow.elapsed_time = calculateElapsedTime(flow)
       return flow
     }
 
