@@ -136,6 +136,8 @@
       })
     }
 
-    $scope.reload()
+    $scope.reload().then(function () {
+      $timeout($scope.reload, 30000).then(arguments.callee)
+    })
   })
 })()
