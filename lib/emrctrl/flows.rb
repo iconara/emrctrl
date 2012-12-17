@@ -7,7 +7,7 @@ module Emrctrl
     end
 
     def flows
-      @emr.job_flows.map { |f| render_flow(f, :summary) }
+      @emr.job_flows.map { |f| render_flow(f) }
     end
 
     def flow(id)
@@ -16,8 +16,7 @@ module Emrctrl
 
   private
 
-    def render_flow(flow, style=:full)
-      properties = style == :summary ? SUMMARY_PROPERTIES : ALL_PROPERTIES
+    def render_flow(flow)
       properties.each_with_object({}) do |property, obj|
         obj[property] = flow.send(property)
         if obj[property] && date_time?(property)
@@ -52,6 +51,10 @@ module Emrctrl
       :master_instance_id,
       :master_instance_type,
       :master_public_dns_name,
+      :bootstrap_actions,
+      :step_details,
+      :supported_products,
+      :instance_group_details,
     ].freeze
 
     DATE_TIME_PROPERTIES = [
