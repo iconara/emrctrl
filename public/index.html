@@ -16,8 +16,8 @@
     <script src="lib/angular.min.js"></script>
     <script src="app/main.js"></script>
   </head>
-  <body ng-controller="AppController">
-    <div class="container">
+  <body>
+    <div class="container" ng-controller="AppController">
       <div class="row">
         <div class="span12">
           <div class="navbar">
@@ -42,17 +42,31 @@
           </div>
         </div>
       </div>
-      <div class="row" ng-show="selectedFlow">
-        <div class="span12">
-          <div class="well">
-            {{selectedFlow | json}}
+      <div ng-show="selectedFlow">
+        <div class="row">
+          <div class="span2">
+            <ng-include src="'flow-details'"></ng-include>
+          </div>
+          <div class="span5">
+            <ng-include src="'flow-steps'"></ng-include>
+          </div>
+          <div class="span5">
+            <ng-include src="'flow-instance-groups'"></ng-include>
+          </div>
+        </div>
+        <div class="row" ng-show="logUrl">
+          <div class="span12">
+            <iframe src="{{logUrl}}" width="100%" height="200"></iframe>
           </div>
         </div>
       </div>
+
+      <hr ng-show="selectedFlow">
+
       <div class="row" ng-show="flows.length > 0">
         <div class="span12">
           <div>
-            <table class="table table-striped table-hover table-condensed">
+            <table class="flows table table-striped table-hover table-condensed">
               <thead>
                 <tr>
                   <th>ID</th>
@@ -61,17 +75,24 @@
                   <th>Ended at</th>
                   <th>Elapsed time</th>
                   <th>State</th>
-                  <th></th>
                 </tr>
               </thead>
               <tbody>
-                <tr ng-repeat="flow in flows" ng-click="selectFlow(flow)">
+                <tr ng-repeat="flow in flows" ng-click="selectFlow(flow)" ng-class="{selected: flow == selectedFlow}">
                   <td class="job-flow-id">{{flow.job_flow_id}}</td>
                   <td class="job-flow-name">{{flow.name}}</td>
                   <td title="{{flow.created_at | isoDateTime}}">{{flow.created_at | timeAgo}}</td>
-                  <td title="{{flow.ended_at | isoDateTime}}">{{flow.ended_at | timeAgo}}</td>
+                  <td title="{{flow.ended_at | isoDateTime}}">
+                    <span ng-show="flow.ended_at">
+                      {{flow.ended_at | timeAgo}}
+                    </span>
+                    <span ng-hide="flow.ended_at">
+                      -
+                    </span>
+                  </td>
                   <td>{{flow.elapsed_time | elapsedTime}}</td>
-                  <td>
+                  <td title="{{flow.last_state_change_reason}}">
+                    <!-- TODO: make a directive and reuse in flow step details -->
                     <span ng-class="{
                       'badge': true,
                       'badge-success': flow.state == 'COMPLETED',
@@ -82,18 +103,14 @@
                     }">
                       <i ng-class="{
                         'flow-state-icon': true,
+                        'icon-cog': flow.state == 'STARTING',
+                        'icon-cogs': flow.state == 'BOOTSTRAPPING',
                         'icon-time': flow.state == 'RUNNING',
                         'icon-ok-sign': flow.state == 'COMPLETED',
                         'icon-exclamation-sign': flow.state == 'TERMINATED',
-                        'icon-warning-sign': flow.state == 'FAILED'
+                        'icon-warning-sign': flow.state == 'FAILED',
+                        'icon-off': flow.state == 'SHUTTING_DOWN'
                       }"></i>&nbsp;{{flow.state}}
-                    </span>
-                  </td>
-                  <td>
-                    <span ng-show="flow.state == 'RUNNING' && flow.master_public_dns_name">
-                      <a title="Go to tasktracker" href="http://{{flow.master_public_dns_name}}:9100/" target="_blank">
-                        <i class="icon-external-link"></i>
-                      </a>
                     </span>
                   </td>
                 </tr>
@@ -103,5 +120,58 @@
         </div>
       </div>
     </div>
+
+    <script type="text/ng-template" id="flow-details">
+      <h4>Details</h4>
+      <p>
+        {{selectedFlow.last_state_change_reason}}
+      </p>
+      <p ng-show="selectedFlow.master_public_dns_name && selectedFlow.state == 'RUNNING'">
+        <a href="http://{{selectedFlow.master_public_dns_name}}:9100/" target="_blank">
+          jobtracker
+          <i class="icon-external-link"></i>
+        </a>
+      </p>
+    </script>
+
+    <script type="text/ng-template" id="flow-steps">
+      <div class="steps">
+        <h4>Steps</h4>
+        <table class="table table-striped table-hover table-condensed">
+          <tbody>
+            <tr ng-repeat="step in selectedFlow.step_details">
+              <td>{{step.step_config.name}}</td>
+              <td>{{step.execution_status_detail.state}}</td>
+              <td>
+                <select class="log-name" ng-model="logName" ng-change="viewLog(step, logName); logName = ''">
+                  <option value="">View logs</option>
+                  <option>controller</option>
+                  <option>stderr</option>
+                  <option>stdout</option>
+                  <option>syslog</option>
+                </select>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </script>
+
+    <script type="text/ng-template" id="flow-instance-groups">
+      <h4>Instance groups</h4>
+      <table class="table table-striped table-hover table-condensed">
+        <tbody>
+          <tr ng-repeat="group in selectedFlow.instance_group_details">
+            <td>{{group.name}}</td>
+            <td>
+              {{group.instance_type}}
+              <span ng-show="group.market == 'SPOT'">(spot)</span>
+            </td>
+            <td>{{group.state}}</td>
+            <td>{{group.instance_running_count}} of {{group.instance_request_count}} running</td>
+          </tr>
+        </tbody>
+      </table>
+    </script>
   </body>
 </html>

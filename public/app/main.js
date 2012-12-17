@@ -115,25 +115,34 @@
     return self
   })
 
-  module.controller("AppController", function ($scope, flows, $log) {
+  module.controller("AppController", function ($scope, $timeout, $window, flows, $log) {
     $scope.flows = []
     $scope.selectedFlow = null
     $scope.loading = false
 
     $scope.reload = function () {
       $scope.loading = true
-
-      flows.loadFlows().then(function () {
+      return flows.loadFlows().then(function () {
         $scope.loading = false
         $scope.flows = flows.flows()
+        if ($scope.selectedFlow) {
+          var found = $scope.flows.filter(function (flow) {
+            return flow.job_flow_id == $scope.selectedFlow.job_flow_id
+          })
+          if (found.length > 0) {
+            $scope.selectFlow = found[0]
+          }
+        }
       })
     }
 
     $scope.selectFlow = function (flow) {
-      flows.loadFlow(flow).then(function (flow) {
-        $scope.flows = flows.flows()
-        $scope.selectedFlow = flow
-      })
+      $scope.selectedFlow = flow
+    }
+
+    $scope.viewLog = function (step, logName) {
+      $log.info("/v1/flows/logs/" + [$scope.selectedFlow.job_flow_id, step.step_config.name, logName].join("/"))
+      $scope.logUrl =  "/v1/flows/logs/" + [$scope.selectedFlow.job_flow_id, step.step_config.name, logName].join("/")
     }
 
     $scope.reload().then(function () {

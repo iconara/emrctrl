@@ -14,3 +14,13 @@ body {
   color: #999;
   font-size: 75%;
 }
+
+table.flows tr.selected {
+
+}
+
+.steps select.log-name {
+  height: 3ex;
+  margin-bottom: 5px;
+  width: 100px;
+}
