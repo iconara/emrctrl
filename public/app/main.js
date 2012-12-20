@@ -47,6 +47,16 @@
       }
     }
   })
+
+  module.filter("percentage", function () {
+    return function (input) {
+      if (input) {
+        return Math.round(input) + "%"
+      } else {
+        return null
+      }
+    }
+  })
 })()
 
 ;(function () {
@@ -56,22 +66,46 @@
     var self = {}
     var flows = []
 
-    var calculateElapsedTime = function (flow) {
-      if (flow.started_at == null) {
-        return 0
+    var DATE_TIME_PROPERTIES = {
+      "created_at": true,
+      "ended_at": true,
+      "started_at": true,
+      "ready_at": true,
+      "creation_date_time": true,
+      "start_date_time": true,
+      "end_date_time": true,
+      "ready_date_time": true
+    }
+
+    var calculateElapsedTime = function (obj) {
+      var start = obj.started_at || obj.start_date_time
+      var end = obj.ended_at || obj.end_date_time || new Date()
+      if (start && end) {
+        return end.getTime() - start.getTime()
       } else {
-        var start = flow.started_at.getTime()
-        var end = (flow.ended_at == null ? new Date() : flow.ended_at).getTime()
-        return end - start
+        return 0
       }
     }
 
+    var timestampsToDates = function (obj) {
+      for (var key in obj) {
+        if (key in DATE_TIME_PROPERTIES) {
+          obj[key] = obj[key] == null ? null : new Date(obj[key] * 1000)
+        }
+      }
+      return obj
+    }
+
+    var prepareStepDetails = function (stepDetails) {
+      timestampsToDates(stepDetails.execution_status_detail)
+      stepDetails.execution_status_detail.elapsed_time = calculateElapsedTime(stepDetails.execution_status_detail)
+      return stepDetails
+    }
+
     var prepareFlow = function (flow) {
-      flow.created_at = new Date(flow.created_at * 1000)
-      flow.ready_at = flow.ready_at == null ? null : new Date(flow.ready_at * 1000)
-      flow.started_at = flow.started_at == null ? null : new Date(flow.started_at * 1000)
-      flow.ended_at = flow.ended_at == null ? null : new Date(flow.ended_at * 1000)
+      timestampsToDates(flow)
       flow.elapsed_time = calculateElapsedTime(flow)
+      flow.step_details.forEach(prepareStepDetails)
       return flow
     }
 
@@ -96,12 +130,34 @@
     self.loadFlows = function () {
       var url = "/v1/flows"
       return $http.get(url).then(function (response) {
-        flows = response.data
+        flows = response.data.slice(0, 10)
         flows.forEach(prepareFlow)
         flows.sort(descendingCreationOrder)
-        flows.filter(stateFilter("RUNNING")).forEach(loadFlowData)
         return self
       })
+    }
+
+    self.loadFlowStats = function (flow) {
+      var url = "/v1/flows/" + flow.job_flow_id + "/cpu"
+      //return $http.get(url).then(function (response) {
+      //  for (var group in response.data) {
+      //    var groupCpu = response.data[group]
+      //    var cpuSum = 0
+      //    var cpuLength = 0
+      //    var cpuSums = groupCpu.forEach(function (instanceStats) {
+      //      instanceStats.forEach(function (stat) {
+      //        cpuSum += stat.sum
+      //        cpuLength += 1
+      //      })
+      //    })
+      //    var foundGroup = flow.instance_group_details.filter(function (igd) {
+      //      return igd.instance_role == group
+      //    })
+      //    if (foundGroup.length > 0) {
+      //      foundGroup[0].cpu = cpuSum/cpuLength
+      //    }
+      //  }
+      //})
     }
 
     self.loadFlow = function (flow) {
@@ -115,12 +171,30 @@
     return self
   })
 
+  module.controller("ToolbarController", function ($scope) { })
+  
+  module.controller("FlowListController", function ($scope) { })
+  
+  module.controller("FlowDetailsController", function ($scope, flows) {
+    $scope.$watch("selectedFlow", function (newFlow, oldFlow) {
+      $scope.logUrl = null
+      if (newFlow) {
+        flows.loadFlowStats(newFlow)
+      }
+    })
+
+    $scope.viewLog = function (step, logName) {
+      $scope.logUrl =  "/v1/flows/logs/" + [$scope.selectedFlow.job_flow_id, step.step_config.name, logName].join("/")
+    }
+  })
+
   module.controller("AppController", function ($scope, $timeout, $window, flows, $log) {
     $scope.flows = []
     $scope.selectedFlow = null
     $scope.loading = false
 
     $scope.reload = function () {
+      if ($scope.loading) return
       $scope.loading = true
       return flows.loadFlows().then(function () {
         $scope.loading = false
@@ -130,7 +204,7 @@
             return flow.job_flow_id == $scope.selectedFlow.job_flow_id
           })
           if (found.length > 0) {
-            $scope.selectFlow = found[0]
+            $scope.selectedFlow = found[0]
           }
         }
       })
@@ -138,11 +212,6 @@
 
     $scope.selectFlow = function (flow) {
       $scope.selectedFlow = flow
-    }
-
-    $scope.viewLog = function (step, logName) {
-      $log.info("/v1/flows/logs/" + [$scope.selectedFlow.job_flow_id, step.step_config.name, logName].join("/"))
-      $scope.logUrl =  "/v1/flows/logs/" + [$scope.selectedFlow.job_flow_id, step.step_config.name, logName].join("/")
     }
 
     $scope.reload().then(function () {

@@ -6,6 +6,7 @@ require 'oj'
 require 'set'
 
 require 'emrctrl/flows'
+require 'emrctrl/stats'
 
 
 module Emrctrl
@@ -18,12 +19,24 @@ module Emrctrl
         @emr ||= AWS::EMR.new(emr_endpoint: 'eu-west-1.elasticmapreduce.amazonaws.com')
       end
 
+      def cloud_watch
+        @cloud_watch ||= AWS::CloudWatch.new(cloud_watch_endpoint: 'monitoring.eu-west-1.amazonaws.com')
+      end
+
+      def ec2
+        @ec2 ||= AWS::EC2.new(ec2_endpoint: 'ec2.eu-west-1.amazonaws.com')
+      end
+
       def s3
         @s3 ||= AWS::S3.new
       end
 
       def flows
         @flows ||= Flows.new(emr)
+      end
+
+      def stats
+        @stats ||= Stats.new(ec2, cloud_watch)
       end
     end
 
@@ -43,18 +56,26 @@ module Emrctrl
 
       desc 'Data about a specific flow'
       params do
-        requires :id, :type => String, :desc => 'Job flow ID'
+        requires :id, type: String, desc: 'Job flow ID'
       end
       get '/:id' do
         flows.flow(params[:id])
       end
 
+      desc 'Get CPU usage for each node in the cluster'
+      params do
+        requires :id, type: String, desc: 'Job flow ID'
+      end
+      get '/:id/cpu' do
+        stats.cpu(params[:id])
+      end
+
       resource :logs do
         desc 'Redirect to logs'
         params do
-          requires :flow_id, :type => String, :desc => 'Job flow ID'
-          requires :step_name, :type => String, :desc => 'Step name'
-          requires :log_name, :type => String, :desc => 'Log name (one of controller, stderr, stdout, syslog)'
+          requires :flow_id, type: String, desc: 'Job flow ID'
+          requires :step_name, type: String, desc: 'Step name'
+          requires :log_name, type: String, desc: 'Log name (one of controller, stderr, stdout, syslog)'
         end
         get '/:flow_id/:step_name/:log_name' do
           flow = flows.flow(params[:flow_id])

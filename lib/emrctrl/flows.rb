@@ -17,10 +17,19 @@ module Emrctrl
   private
 
     def render_flow(flow)
-      properties.each_with_object({}) do |property, obj|
+      obj = ALL_PROPERTIES.each_with_object({}) do |property, obj|
         obj[property] = flow.send(property)
-        if obj[property] && date_time?(property)
-          obj[property] = obj[property].to_i
+      end
+      times_to_timestamps!(obj)
+      obj[:step_details].each { |sd| times_to_timestamps!(sd[:execution_status_detail]) if sd[:execution_status_detail] } if obj[:step_details]
+      obj[:instance_group_details].each { |igd| times_to_timestamps!(igd) } if obj[:instance_group_details]
+      obj
+    end
+
+    def times_to_timestamps!(obj)
+      obj.each_key do |k|
+        if obj[k] && date_time?(k)
+          obj[k] = obj[k].to_i
         end
       end
     end
@@ -29,7 +38,18 @@ module Emrctrl
       DATE_TIME_PROPERTIES.include?(property)
     end
 
-    SUMMARY_PROPERTIES = [
+    DATE_TIME_PROPERTIES = [
+      :created_at,
+      :ended_at,
+      :started_at,
+      :ready_at,
+      :creation_date_time,
+      :start_date_time,
+      :end_date_time,
+      :ready_date_time,
+    ].to_set.freeze
+
+    ALL_PROPERTIES = [
       :job_flow_id,
       :name,
       :state,
@@ -37,9 +57,6 @@ module Emrctrl
       :ended_at,
       :ready_at,
       :started_at,
-    ].freeze
-
-    ALL_PROPERTIES = SUMMARY_PROPERTIES + [
       :last_state_change_reason,
       :instance_count,
       :normalized_instance_hours,
@@ -56,12 +73,5 @@ module Emrctrl
       :supported_products,
       :instance_group_details,
     ].freeze
-
-    DATE_TIME_PROPERTIES = [
-      :created_at,
-      :ended_at,
-      :ready_at,
-      :started_at,
-    ].to_set.freeze
   end
 end

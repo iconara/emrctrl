@@ -16,53 +16,85 @@
     <script src="lib/angular.min.js"></script>
     <script src="app/main.js"></script>
   </head>
-  <body>
-    <div class="container" ng-controller="AppController">
-      <div class="row">
-        <div class="span12">
-          <div class="navbar">
-            <div class="navbar-inner">
-              <a class="brand" href="#">
-                <i class="icon-cogs"></i>
-                EMRCTRL
+  <body ng-controller="AppController">
+
+    <div class="navbar navbar-inverse navbar-fixed-top" ng-controller="ToolbarController">
+      <div class="navbar-inner">
+        <div class="container-fluid">
+          <a class="brand" href="#">
+            <i class="icon-cogs"></i>
+            EMRCTRL
+          </a>
+
+          <div class="pull-right reload-control">
+            <a class="btn btn-mini btn-primary" ng-class="{'disabled': loading}" ng-click="reload()">
+              <ng-switch on="loading">
+                <span ng-switch-when="true">
+                  <i class="icon-cog"></i>
+                  Loading...
+                </span>
+                <span ng-switch-when="false">
+                  <i class="icon-refresh"></i>
+                  Reload
+                </span>
+              </ng-switch>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container-fluid" ng-controller="FlowListController">
+      <div class="row-fluid">
+        <div class="span3">
+          <ul class="nav nav-list">
+            <li ng-repeat="flow in flows" ng-class="{active: flow == selectedFlow}">
+              <a ng-click="selectFlow(flow)" title="{{flow.state}} ({{flow.elapsed_time | elapsedTime}})">
+                <span ng-class="{
+                  'badge': true,
+                  'badge-success': flow.state == 'COMPLETED',
+                  'badge-warning': flow.state == 'TERMINATED',
+                  'badge-important': flow.state == 'FAILED',
+                  'badge-info': flow.state == 'RUNNING',
+                  'badge-inverse': false
+                }">
+                  <i ng-class="{
+                    'icon-cog': flow.state == 'STARTING',
+                    'icon-cogs': flow.state == 'BOOTSTRAPPING',
+                    'icon-time': flow.state == 'RUNNING',
+                    'icon-ok-sign': flow.state == 'COMPLETED',
+                    'icon-exclamation-sign': flow.state == 'TERMINATED',
+                    'icon-warning-sign': flow.state == 'FAILED',
+                    'icon-off': flow.state == 'SHUTTING_DOWN'
+                  }"></i>
+                </span>
+                {{flow.name}}
               </a>
-              <ul class="nav pull-right">
-                <li>
-                  <a ng-click="reload()" ng-hide="loading">
-                    <i class="icon-refresh"></i>
-                    Reload
-                  </a>
-                  <a ng-show="loading">
-                    <i class="icon-cog"></i>
-                    Loading...
-                  </a>
-                </li>
-              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <div class="span9" ng-show="selectedFlow" ng-controller="FlowDetailsController">
+          <div class="row-fluid">
+            <div class="span2">
+              <ng-include src="'flow-details'"></ng-include>
+            </div>
+            <div class="span5">
+              <ng-include src="'flow-steps'"></ng-include>
+            </div>
+            <div class="span5">
+              <ng-include src="'flow-instance-groups'"></ng-include>
+            </div>
+          </div>
+          <div class="row-fluid" ng-show="logUrl">
+            <div class="span12">
+              <iframe src="{{logUrl}}" width="100%" height="200"></iframe>
             </div>
           </div>
         </div>
       </div>
-      <div ng-show="selectedFlow">
-        <div class="row">
-          <div class="span2">
-            <ng-include src="'flow-details'"></ng-include>
-          </div>
-          <div class="span5">
-            <ng-include src="'flow-steps'"></ng-include>
-          </div>
-          <div class="span5">
-            <ng-include src="'flow-instance-groups'"></ng-include>
-          </div>
-        </div>
-        <div class="row" ng-show="logUrl">
-          <div class="span12">
-            <iframe src="{{logUrl}}" width="100%" height="200"></iframe>
-          </div>
-        </div>
-      </div>
 
-      <hr ng-show="selectedFlow">
-
+      <!--
       <div class="row" ng-show="flows.length > 0">
         <div class="span12">
           <div>
@@ -92,7 +124,7 @@
                   </td>
                   <td>{{flow.elapsed_time | elapsedTime}}</td>
                   <td title="{{flow.last_state_change_reason}}">
-                    <!-- TODO: make a directive and reuse in flow step details -->
+                    <!- TODO: make a directive and reuse in flow step details ->
                     <span ng-class="{
                       'badge': true,
                       'badge-success': flow.state == 'COMPLETED',
@@ -119,12 +151,23 @@
           </div>
         </div>
       </div>
+      -->
+
     </div>
 
     <script type="text/ng-template" id="flow-details">
       <h4>Details</h4>
       <p>
+        {{selectedFlow.name}}
+      </p>
+      <p>
+        {{selectedFlow.job_flow_id}}
+      </p>
+      <p>
         {{selectedFlow.last_state_change_reason}}
+      </p>
+      <p>
+        {{selectedFlow.elapsed_time | elapsedTime}}
       </p>
       <p ng-show="selectedFlow.master_public_dns_name && selectedFlow.state == 'RUNNING'">
         <a href="http://{{selectedFlow.master_public_dns_name}}:9100/" target="_blank">
@@ -142,14 +185,12 @@
             <tr ng-repeat="step in selectedFlow.step_details">
               <td>{{step.step_config.name}}</td>
               <td>{{step.execution_status_detail.state}}</td>
+              <td>{{step.execution_status_detail.elapsed_time | elapsedTime}}</td>
               <td>
-                <select class="log-name" ng-model="logName" ng-change="viewLog(step, logName); logName = ''">
-                  <option value="">View logs</option>
-                  <option>controller</option>
-                  <option>stderr</option>
-                  <option>stdout</option>
-                  <option>syslog</option>
-                </select>
+                <a title="controller" ng-click="viewLog(step, 'controller')"><i class="icon-file"></i></a>
+                <a title="stderr" ng-click="viewLog(step, 'stderr')"><i class="icon-file"></i></a>
+                <a title="stdout" ng-click="viewLog(step, 'stdout')"><i class="icon-file"></i></a>
+                <a title="syslog" ng-click="viewLog(step, 'syslog')"><i class="icon-file"></i></a>
               </td>
             </tr>
           </tbody>
@@ -169,6 +210,14 @@
             </td>
             <td>{{group.state}}</td>
             <td>{{group.instance_running_count}} of {{group.instance_request_count}} running</td>
+            <td>
+              <span ng-show="group.cpu">
+                {{group.cpu | percentage}} CPU
+              </span>
+              <span ng-hide="group.cpu">
+                …
+              </span>
+            </td>
           </tr>
         </tbody>
       </table>
