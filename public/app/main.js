@@ -177,7 +177,9 @@
   
   module.controller("FlowDetailsController", function ($scope, flows) {
     $scope.$watch("selectedFlow", function (newFlow, oldFlow) {
-      $scope.logUrl = null
+      if (newFlow == null || oldFlow == null || newFlow.job_flow_id != oldFlow.job_flow_id) {
+        $scope.logUrl = null
+      }
       if (newFlow) {
         flows.loadFlowStats(newFlow)
       }
