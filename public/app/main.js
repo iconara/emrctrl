@@ -48,6 +48,16 @@
     }
   })
 
+  module.filter("fraction", function () {
+    return function (input) {
+      if (input) {
+        return Math.round(100*input) + "%"
+      } else {
+        return null
+      }
+    }
+  })
+
   module.filter("percentage", function () {
     return function (input) {
       if (input) {
