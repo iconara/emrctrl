@@ -1,1 +1,1 @@
-rvm --create use 1.9.3-p327@emrctrl
+rvm --create use jruby-1.7.2@emrctrl

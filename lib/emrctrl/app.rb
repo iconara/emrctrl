@@ -2,7 +2,6 @@
 
 require 'grape'
 require 'aws'
-require 'oj'
 require 'set'
 
 require 'emrctrl/flows'
