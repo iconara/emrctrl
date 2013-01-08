@@ -9,7 +9,7 @@ module Emrctrl
     end
 
     def status(flow_id)
-      if (client = job_client(flow_id))
+      with_client(flow_id) do |client|
         {
           status: render_status(client.cluster_status),
           jobs: client.all_jobs.map { |job_status| render_job(client.get_job(job_status.job_id)) },
@@ -44,14 +44,14 @@ module Emrctrl
       }
     end
 
-    def job_client(flow_id)
+    def with_client(flow_id)
       if (job_flow = @emr.job_flows[flow_id]) && job_flow.state == "RUNNING" &&
           listening?(job_flow.master_public_dns_name, 9001)
         conf = Hadoop::Conf::Configuration.new
         conf.set('mapred.job.tracker', "#{job_flow.master_public_dns_name}:9001")
         conf.set('fs.default.name', "hdfs://#{job_flow.master_public_dns_name}:9000/")
         job_conf = Hadoop::Mapred::JobConf.new(conf)
-        Hadoop::Mapred::JobClient.new(job_conf)
+        yield Hadoop::Mapred::JobClient.new(job_conf)
       end
     end
 
