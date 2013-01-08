@@ -45,12 +45,24 @@ module Emrctrl
     end
 
     def job_client(flow_id)
-      if (job_flow = @emr.job_flows[flow_id]) && job_flow.state == "RUNNING"
+      if (job_flow = @emr.job_flows[flow_id]) && job_flow.state == "RUNNING" &&
+          listening?(job_flow.master_public_dns_name, 9001)
         conf = Hadoop::Conf::Configuration.new
         conf.set('mapred.job.tracker', "#{job_flow.master_public_dns_name}:9001")
         conf.set('fs.default.name', "hdfs://#{job_flow.master_public_dns_name}:9000/")
         job_conf = Hadoop::Mapred::JobConf.new(conf)
         Hadoop::Mapred::JobClient.new(job_conf)
+      end
+    end
+
+    def listening?(host, port)
+      socket = java.net.Socket.new
+      begin
+        socket.connect(java.net.InetSocketAddress.new(host, port), 10_000)
+        socket.close
+        true
+      rescue java.net.SocketTimeoutException => e
+        false
       end
     end
   end
