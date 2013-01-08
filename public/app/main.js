@@ -149,7 +149,7 @@
 
     self.loadFlowStats = function (flow) {
       var url = "/v1/flows/" + flow.job_flow_id + "/tracker"
-      return $http.get(url).then(function (response) {
+      return $http.get(url, {timeout: 10000}).then(function (response) {
         return response.data;
       })
     }
