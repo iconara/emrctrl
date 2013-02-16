@@ -48,6 +48,11 @@ module Emrctrl
       AWS.stop_memoizing
     end
 
+    before do
+      header['Access-Control-Allow-Origin'] = '*'
+      header['Access-Control-Request-Method'] = '*'
+    end
+
     resource :flows do
       desc 'Lists all flows'
       get '/' do
