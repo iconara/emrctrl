@@ -2,11 +2,11 @@
 
 require 'grape'
 require 'aws'
-require 'oj'
 require 'set'
 
 require 'emrctrl/flows'
 require 'emrctrl/stats'
+require 'emrctrl/tracker'
 
 
 module Emrctrl
@@ -38,6 +38,10 @@ module Emrctrl
       def stats
         @stats ||= Stats.new(ec2, cloud_watch)
       end
+
+      def tracker
+        @tracker ||= Tracker.new(emr)
+      end
     end
 
     before do
@@ -65,6 +69,14 @@ module Emrctrl
       end
       get '/:id' do
         flows.flow(params[:id])
+      end
+
+      desc 'Get cluster status'
+      params do
+        requires :id, type: String, desc: 'Job flow ID'
+      end
+      get '/:id/tracker' do
+        tracker.status(params[:id]) || error!('Not Found', 404)
       end
 
       desc 'Get CPU usage for each node in the cluster'

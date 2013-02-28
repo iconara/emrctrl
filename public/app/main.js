@@ -48,6 +48,16 @@
     }
   })
 
+  module.filter("fraction", function () {
+    return function (input) {
+      if (input) {
+        return Math.round(100*input) + "%"
+      } else {
+        return null
+      }
+    }
+  })
+
   module.filter("percentage", function () {
     return function (input) {
       if (input) {
@@ -138,26 +148,10 @@
     }
 
     self.loadFlowStats = function (flow) {
-      var url = "/v1/flows/" + flow.job_flow_id + "/cpu"
-      //return $http.get(url).then(function (response) {
-      //  for (var group in response.data) {
-      //    var groupCpu = response.data[group]
-      //    var cpuSum = 0
-      //    var cpuLength = 0
-      //    var cpuSums = groupCpu.forEach(function (instanceStats) {
-      //      instanceStats.forEach(function (stat) {
-      //        cpuSum += stat.sum
-      //        cpuLength += 1
-      //      })
-      //    })
-      //    var foundGroup = flow.instance_group_details.filter(function (igd) {
-      //      return igd.instance_role == group
-      //    })
-      //    if (foundGroup.length > 0) {
-      //      foundGroup[0].cpu = cpuSum/cpuLength
-      //    }
-      //  }
-      //})
+      var url = "/v1/flows/" + flow.job_flow_id + "/tracker"
+      return $http.get(url, {timeout: 10000}).then(function (response) {
+        return response.data;
+      })
     }
 
     self.loadFlow = function (flow) {
@@ -179,9 +173,14 @@
     $scope.$watch("selectedFlow", function (newFlow, oldFlow) {
       if (newFlow == null || oldFlow == null || newFlow.job_flow_id != oldFlow.job_flow_id) {
         $scope.logUrl = null
+        $scope.tracker = null
       }
       if (newFlow) {
-        flows.loadFlowStats(newFlow)
+        if (newFlow.state == 'RUNNING') {
+          flows.loadFlowStats(newFlow).then(function (tracker) {
+            $scope.tracker = tracker
+          })
+        }
       }
     })
 
