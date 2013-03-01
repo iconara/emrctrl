@@ -128,7 +128,7 @@
     }
 
     var loadFlowData = function (flow) {
-      var url = "/v1/flows/" + flow.job_flow_id
+      var url = "v1/flows/" + flow.job_flow_id
       return $http.get(url).then(function (response) {
         return prepareFlow(response.data)
       }).then(function (loadedFlow) {
@@ -138,7 +138,7 @@
     }
 
     self.loadFlows = function () {
-      var url = "/v1/flows"
+      var url = "v1/flows"
       return $http.get(url).then(function (response) {
         flows = response.data.slice(0, 10)
         flows.forEach(prepareFlow)
@@ -148,7 +148,7 @@
     }
 
     self.loadFlowStats = function (flow) {
-      var url = "/v1/flows/" + flow.job_flow_id + "/tracker"
+      var url = "v1/flows/" + flow.job_flow_id + "/tracker"
       return $http.get(url, {timeout: 10000}).then(function (response) {
         return response.data;
       })
@@ -185,7 +185,7 @@
     })
 
     $scope.viewLog = function (step, logName) {
-      $scope.logUrl =  "/v1/flows/logs/" + [$scope.selectedFlow.job_flow_id, step.step_config.name, logName].join("/")
+      $scope.logUrl =  "v1/flows/logs/" + [$scope.selectedFlow.job_flow_id, step.step_config.name, logName].join("/")
     }
   })
 
